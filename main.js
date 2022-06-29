@@ -10,6 +10,7 @@ const fieldCharacter = "░";
 const pathCharacter = "*";
 const row = 10;
 const col = 10;
+const probability = 0.3;
 
 //Creating field class
 class Field {
@@ -30,69 +31,57 @@ class Field {
   generateField() {
     for (let y = 0; y < row; y++) {
       for (let x = 0; x < col; x++) {
-        const prob = Math.random();
-        this.field[y][x] = fieldCharacter;
+        let getProb = Math.random();
+        this.field[x][y] = getProb >= probability ? fieldCharacter : hole;
       }
     }
-
-    //number of holes must be less thn number of grass patches
-
-    const holesPos = (holeX, holeY) => {
-      const numHoles = Math.floor(Math.random() * ((row * col) / 2 - 1));
-      let j = 0;
-      while (j < numHoles) {
-        holeX = Math.floor(Math.random() * col);
-        holeY = Math.floor(Math.random() * row);
-        this.field[holeX][holeY] = hole;
-        j++;
-      }
-    };
 
     //hat position
-    const hatPosition = (hatPosX, hatPosY) => {
+    let hatPosX;
+    let hatPosY;
+    do {
       hatPosX = Math.floor(Math.random() * col);
       hatPosY = Math.floor(Math.random() * row);
+    } while (hatPosX == 0 && hatPosY == 0);
 
-      this.field[hatPosX][hatPosY] = hat;
-    };
+    this.field[hatPosY][hatPosX] = hat;
 
-    holesPos();
-    hatPosition();
-    this.charPosition();
+    this.field[0][0] = pathCharacter;
   }
 
-  charPosition() {
-    this.field[this.locationX][this.locationY] = pathCharacter;
-  }
+  //Game ends when one of the following is met:
+  // 1) Char hits the boundaries
+  // 2) Char falls into a hole
+  // 3) Char finds the hat
 
   runGame() {
-    /*
-    let i = 0;
-    do {
+    let playing = true;
+    while (playing) {
+      this.field[this.locationY][this.locationX] = pathCharacter;
       this.print();
       this.askQuestion();
-      i++;
-    } while (i < 4);
-    */
 
-    let endGame = false;
-    while (!endGame) {
-      this.print();
-      this.askQuestion();
-      if (this.charPosition() == hat) {
-        console.log("Congrats, you found your hat!");
-        endGame = true;
-      } else if (this.charPosition() == hole) {
-        console.log("Sorry, you fell down a hole!");
-        endGame = true;
-      } else if (
-        this.charPosition[this.locationX] < 0 ||
-        this.charPosition[this.locationY] < 0
-      ) {
-        console.log("Oh no you have disappeared");
-        endGame = true;
+      // 1) Char hits boundararies
+      if (!this.isInBoundary()) {
+        console.log("Out of boundary - Game over");
+        playing = false;
+      } else if (this.field[this.locationY][this.locationX] == hat) {
+        console.log("Congrats, you fuond your hat!");
+        playing = false;
+      } else if (this.field[this.locationY][this.locationX] == hole) {
+        console.log("Sorry, you fell into a hole. Game over");
+        playing = false;
       }
     }
+  }
+
+  isInBoundary() {
+    return (
+      this.locationX >= 0 &&
+      this.locationY >= 0 &&
+      this.locationX < col &&
+      this.locationY < row
+    );
   }
 
   print() {
@@ -108,38 +97,27 @@ class Field {
 
   //moving the character according to the user input
   askQuestion() {
-    const answer = prompt("Which way? ");
-    if (answer == "u") {
-      this.moveUp();
-    } else if (answer == "d") {
-      this.moveDown();
-    } else if (answer == "l") {
-      this.moveLeft();
-    } else if (answer == "r") {
-      this.moveRight();
-    } else {
-      prompt("Please enter either u, d, l or r to move the player. ");
+    const answer = prompt("Which way? {u, d, l, r}");
+    switch (answer) {
+      case "u":
+        this.field[this.locationY][this.locationX] = fieldCharacter;
+        this.locationY -= 1;
+        break;
+      case "d":
+        this.field[this.locationY][this.locationX] = fieldCharacter;
+        this.locationY += 1;
+        break;
+      case "l":
+        this.field[this.locationY][this.locationX] = fieldCharacter;
+        this.locationX -= 1;
+        break;
+      case "r":
+        this.field[this.locationY][this.locationX] = fieldCharacter;
+        this.locationX += 1;
+        break;
+      default:
+        console.log("Please enter u, d, l, r");
     }
-  }
-
-  moveDown() {
-    this.locationX += 1;
-    this.charPosition();
-  }
-
-  moveUp() {
-    this.locationX -= 1;
-    this.charPosition();
-  }
-
-  moveRight() {
-    this.locationY += 1;
-    this.charPosition();
-  }
-
-  moveLeft() {
-    this.locationY -= 1;
-    this.charPosition();
   }
 } //End of field class
 
